@@ -27,9 +27,9 @@ idfShp <- st_read(dsn = "data/COMMUNES-IDF/COMMUNE-IDF.shp")
 crs(idfShp) # EPSG:2154; https://epsg.io/2154
 plot(idfShp[1])
 
-# European landcover
-clc <- rast(x = "W:/PYWELL_SHARED/Pywell Projects/BRC/Oli Pescott/___SCRATCH/maps/CLC2018_EuropeLandCover/CLC2018/u2018_clc2018_v2020_20u1_raster100m/DATA/U2018_CLC2018_V2020_20u1.tif")
-plot(clc, legend = FALSE)
+# European landcover -- full CLC map not included here
+#clc <- rast(x = "W:/PYWELL_SHARED/Pywell Projects/BRC/Oli Pescott/___SCRATCH/maps/CLC2018_EuropeLandCover/CLC2018/u2018_clc2018_v2020_20u1_raster100m/DATA/U2018_CLC2018_V2020_20u1.tif")
+#plot(clc, legend = FALSE)
 
 ## Extract relevant part of Euro landcover (possibly not necessary, could just skip to extract below, but maybe this speeds up extract as it is not working with
 # the entire European raster)
