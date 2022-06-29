@@ -131,9 +131,9 @@ topleft(outR)
 ## and the original hectad IDs of those <= 50
 outTop50_id <- outTop50_envRank <- outTop50_distRank <- matrix(nrow = 1300, ncol = 50)
 for (j in 1:1300){
-  outTop50_id[j,] <- subset(data_matrix[j,], outR[j,]<51) # get original hectad IDs, in distance order from target, for env similarity ranks <= 100
-  outTop50_envRank[j,] <- subset(outR[j,], outR[j,]<51) # also get actual environmental similarity ranks in distance order, for env similarity ranks <= 100
-  outTop50_distRank[j,] <- subset(outD[j,], outR[j,]<51) # also get actual distance similarity ranks in distance order, for env similarity ranks <= 100
+  outTop50_id[j,] <- subset(data_matrix[j,], outR[j,]<51) # get original hectad IDs, in distance order from target, for env similarity ranks <= 50
+  outTop50_envRank[j,] <- subset(outR[j,], outR[j,]<51) # also get actual environmental similarity ranks in distance order, for env similarity ranks <= 50
+  outTop50_distRank[j,] <- subset(outD[j,], outR[j,]<51) # also get actual distance similarity ranks in distance order, for env similarity ranks <= 50
 }
 topleft(outTop50_id)
 topleft(outTop50_envRank)
