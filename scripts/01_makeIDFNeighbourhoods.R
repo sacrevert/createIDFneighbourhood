@@ -210,7 +210,7 @@ idfNew_v0 <- final_weights
 load(file = "outputs/idfCommuneWeights_2022-06-30_v1.rdata")
 
 # add in x/y for visualisation purposes here
-idfGrLookup <- data.frame(letGr = idfShpXY$NOM_COMM, x = idfShpXY$X, y = idfShpXY$Y, region = "IDF")
+idfGrLookup <- data.frame(letGr = idfShpXY$FULL_NOM, x = idfShpXY$X, y = idfShpXY$Y, region = "IDF")
 idfGrLookup <- idfGrLookup[order(idfGrLookup$letGr),]; head(idfGrLookup)
 #save(idfGrLookup, file = "outputs/idfCentroidXY.rdata")
 
