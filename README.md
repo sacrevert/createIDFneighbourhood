@@ -1,5 +1,5 @@
 # createIDFneighbourhood
-Frescalo neighbourhoods for the Ile-de-France
+Frescalo neighbourhoods for the Ile-de-France region of France
 
 See
 https://github.com/sacrevert/frescaloNeighbourhoods 
