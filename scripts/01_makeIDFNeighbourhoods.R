@@ -27,9 +27,9 @@ idfShp <- st_read(dsn = "data/COMMUNES-IDF/COMMUNE-IDF.shp")
 crs(idfShp) # EPSG:2154; https://epsg.io/2154
 plot(idfShp[1])
 
-# European landcover -- full CLC map not included here
-#clc <- rast(x = "W:/PYWELL_SHARED/Pywell Projects/BRC/Oli Pescott/___SCRATCH/maps/CLC2018_EuropeLandCover/CLC2018/u2018_clc2018_v2020_20u1_raster100m/DATA/U2018_CLC2018_V2020_20u1.tif")
-#plot(clc, legend = FALSE)
+# European landcover
+clc <- rast(x = "W:/PYWELL_SHARED/Pywell Projects/BRC/Oli Pescott/___SCRATCH/maps/CLC2018_EuropeLandCover/CLC2018/u2018_clc2018_v2020_20u1_raster100m/DATA/U2018_CLC2018_V2020_20u1.tif")
+plot(clc, legend = FALSE)
 
 ## Extract relevant part of Euro landcover (possibly not necessary, could just skip to extract below, but maybe this speeds up extract as it is not working with
 # the entire European raster)
@@ -38,7 +38,7 @@ plot(idfBuf)
 # create bounding box coords as well for visualisations later
 #idfBuf4326 <- st_transform(st_buffer(st_union(idfShp[1]), 1000), crs = 4326)
 #idfBB <- st_bbox(idfBuf4326)
-#save(idfBB, file = "outputs/idfBB.rdata")
+#save(idfBB, file = "outputs/idfBB.rdata") # move to visualisations project data folder
 # carry on with land cover crop
 #clc2Crop <- crop(x = clc, y = st_transform(idfBuf, crs = "epsg:3035"))
 #plot(clc2Crop)
@@ -61,17 +61,19 @@ p.counts <- rbind.fill(class.counts)
 p.counts[is.na(p.counts)] <- 0
 
 head(as.data.frame(idfShp))
-idfInf <- data.frame(idfShp[,c(1:3)])
+idfShp$FULL_NOM <- paste0(idfShp$NOM_COMM," (",idfShp$INSEE_COMM,")") # create a name with both elements for visualisation
+idfInf <- data.frame(idfShp[,c(1:3,19)]); head(idfInf)
 idfInfC <- cbind(idfInf, p.counts); head(idfInfC)
-idfLcM <- as.matrix(idfInfC[,c(5:29)]); head(idfLcM)  # just keep land cover info for matrix operations
+idfLcM <- as.matrix(idfInfC[,c(6:30)]); head(idfLcM)  # just keep land cover info for matrix operations
 ## normalise relative to total commune area (otherwise commune similarity might just be based on size rather than composition of land covers)
 idfLcMN <- t(round(apply(idfLcM, 1, function(x) x/sum(x)), digits = 4))
 
 ## for the moment just stick with land cover and distance as the weights, although could add in geology, soil etc. later on
 ## join everything back together
-idfShp2 <- st_drop_geometry(idfShp)
-allDat <- cbind(idfShp2[,c(1:3,5:6)], idfLcMN); head(allDat)
+idfShp2 <- st_drop_geometry(idfShp); head(idfShp2)
+allDat <- cbind(idfShp2[,c(1:3,5:6,18)], idfLcMN); head(allDat)
 #write.csv(allDat, file = "outputs/finalIDF_communeNormalisedLandcoverMatrix.csv")
+#allDat <- read.csv(file = "outputs/finalIDF_communeNormalisedLandcoverMatrix.csv", header = T, stringsAsFactors = F)
 
 #################################################################
 ## Part 2 -- Create lists of weighted neighbours for each commune
@@ -83,18 +85,15 @@ library(useful) # for corner views of large matrices
 ##
 #allDat <- read.csv(file = "outputs/finalIDF_communeNormalisedLandcoverMatrix.csv", header = T, stringsAsFactors = F)
 #head(allDat)
-index <- allDat[,c(1:5)] # ids
-lcNum <- allDat[,c(6:30)] # normalised land cover data
+index <- allDat[,c(1:6)] # ids
+lcNum <- allDat[,c(7:31)] # normalised land cover data
 str(lcNum) # all numeric
 ## Calculate 100 nearest neighbours spatially -- this could be any number, but go with 100 initially
 ## re-add centroids, as Paris ones are missing
 idfShpXY <- cbind(idfShp, st_coordinates(st_centroid(idfShp)))
 numbers <- idfShpXY[,c("X","Y")]
 numbers <- as(numbers, Class = "Spatial")
-#coordinates(numbers) = ~X+Y
-#proj4string(numbers) = CRS("+init=epsg:2154")
-
-numbers.df <- SpatialPointsDataFrame(numbers, data.frame(id=1:length(numbers), nom = index$NOM_COMM))
+numbers.df <- SpatialPointsDataFrame(numbers, data.frame(id=1:length(numbers), nom = index$FULL_NOM))
 # spdep functions 'knearneigh' -- get 100 nearest neighbours
 numbers.knn <- spdep::knearneigh(numbers.df, k = 100) # calculate k nearest neighbours
 # For each hectad, from closest 100, select the 50 with the closest land cover similarity
@@ -102,7 +101,7 @@ numbers.knn <- spdep::knearneigh(numbers.df, k = 100) # calculate k nearest neig
 # str(numbers.knn$nn)
 #int [1:1300, 1:100] 6 3 21 3 8 1 10 9 8 7 ...
 data_matrix <- numbers.knn$nn
-## add target hectad to first column (otherwise hectad itself is not considered in Frescalo -- see Hill 2012), and delete 201st
+## add target hectad to first column (otherwise hectad itself is not considered in Frescalo -- see Hill 2012), and delete 101st
 data_matrix <- cbind(1:1300, data_matrix); data_matrix <- data_matrix[,c(1:100)]
 
 ## need to iterate by row, and by cell within row, grabbing relevant rows of hectad env data, calculating similarity
@@ -201,16 +200,18 @@ head(final_weights)
 nrow(final_weights)
 row.names(final_weights) <- 1:nrow(final_weights)
 ###
-#write.csv(final_weights, file = "outputs/idfCommuneWeights_2022-06-29_v0.csv")
+#write.csv(final_weights, file = "outputs/idfCommuneWeights_2022-06-30_v1.csv")
 ###
 
 ### Create files for Frescalo visualisation
 idfNew_v0 <- final_weights
-#save(idfNew_v0, file = "outputs/idfCommuneWeights_2022-06-29_v0.rdata")
-load(file = "outputs/idfCommuneWeights_2022-06-29_v0.rdata")
+#save(idfNew_v0, file = "outputs/idfCommuneWeights_2022-06-30_v1.rdata")
+#load(file = "outputs/idfCommuneWeights_2022-06-29_v0.rdata") # version with wrong names
+load(file = "outputs/idfCommuneWeights_2022-06-30_v1.rdata")
 
 # add in x/y for visualisation purposes here
 idfGrLookup <- data.frame(letGr = idfShpXY$NOM_COMM, x = idfShpXY$X, y = idfShpXY$Y, region = "IDF")
 idfGrLookup <- idfGrLookup[order(idfGrLookup$letGr),]; head(idfGrLookup)
 #save(idfGrLookup, file = "outputs/idfCentroidXY.rdata")
+
 
